@@ -5,12 +5,7 @@ from scipy.sparse.linalg import svds
 import numpy as np
 from tabulate import tabulate
 
-
-class SvdResult:
-    def __init__(self, u, sigma, v_t):
-        self.u = u
-        self.sigma = sigma
-        self.v_t = v_t
+from svd_result import SvdResult
 
 
 def do_svd(r_demeaned, k):
