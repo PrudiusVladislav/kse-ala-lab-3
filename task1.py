@@ -3,38 +3,39 @@ import numpy as np
 from svd_result import SvdResult
 
 
-def manual_svd(A):
-    AtA = np.dot(A.T, A)
-    AAt = np.dot(A, A.T)
+def manual_svd(a: np.ndarray):
+    at_a = a.T @ a
+    a_at = a @ a.T
 
-    eigvals_AtA, V = np.linalg.eigh(AtA)  # right
-    eigvals_AAt, U = np.linalg.eigh(AAt)  # left
+    eigvals_at_a, v = np.linalg.eigh(at_a)  # right
+    eigvals_a_at, u = np.linalg.eigh(a_at)  # left
 
-    idx_AtA = np.argsort(eigvals_AtA)[::-1]
-    eigvals_AtA = eigvals_AtA[idx_AtA]
-    V = V[:, idx_AtA]
+    idx_at_a = np.argsort(eigvals_at_a)[::-1]
+    eigvals_at_a = eigvals_at_a[idx_at_a]
+    eigvals_at_a[eigvals_at_a < 0] = 0
+    v = v[:, idx_at_a]
 
-    idx_AAt = np.argsort(eigvals_AAt)[::-1]
+    # idx_a_at = np.argsort(eigvals_a_at)[::-1]
     # eigvals_AAt = eigvals_AAt[idx_AAt]
-    U = U[:, idx_AAt]
+    # u = u[:, idx_a_at]
 
-    singular_values = np.sqrt(eigvals_AtA)
+    singular_values = np.sqrt(eigvals_at_a)
 
-    U_corrected = np.zeros_like(U)
+    u_corrected = np.zeros_like(u)
     for i in range(len(singular_values)):
         if singular_values[i] > 1e-10:  # to avoid division by zero for near zero values
-            U_corrected[:, i] = (A @ V[:, i]) / singular_values[i]
+            u_corrected[:, i] = (a @ v[:, i]) / singular_values[i]
 
-    Sigma = np.zeros_like(A, dtype=float)
-    np.fill_diagonal(Sigma, singular_values)
+    sigma = np.zeros_like(a, dtype=float)
+    np.fill_diagonal(sigma, singular_values)
 
-    return SvdResult(U_corrected, Sigma, V.T)
+    return SvdResult(u_corrected, sigma, v.T)
 
 
 A = np.array([
-    [8, 0, 8],
-    [2, 2, 4],
-    [3, 9, 9]
+    [8, 0, 8, 10],
+    [2, 2, 4, 5],
+    [3, 9, 9, 3]
 ])
 
 svd_result = manual_svd(A)
