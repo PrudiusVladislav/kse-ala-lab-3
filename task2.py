@@ -8,42 +8,38 @@ from tabulate import tabulate
 from svd_result import SvdResult
 
 
+def plot_stats(m, title):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(m[:, 0], m[:, 1], m[:, 2], marker='o')
+    ax.set_title(title)
+    ax.set_xlabel('Feat 1')
+    ax.set_ylabel('Feat 2')
+    ax.set_zlabel('Feat 3')
+    plt.show()
+
+
 def do_svd(r_demeaned, k):
     u, sigma, v_t = svds(r_demeaned, k=k)
-    # print(u)
 
-    u_subset = u[:100, :]
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    plot_stats(u[:100, :], f'User Features k={k}')
+    plot_stats(v_t.T[:500, :], f'Movie Features k={k}')
 
-    ax.scatter(u_subset[:, 0], u_subset[:, 1], u_subset[:, 2], marker='o')
-    ax.set_title(f'Preferences k={k}')
-    ax.set_xlabel('Feat 1')
-    ax.set_ylabel('Feat 2')
-    ax.set_zlabel('Feat 3')
-    plt.show()
-
-    vt_subset = v_t.T[:500, :]
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    ax.scatter(vt_subset[:, 0], vt_subset[:, 1], vt_subset[:, 2], marker='o')
-    ax.set_title(f'Movie Features k={k}')
-    ax.set_xlabel('Feat 1')
-    ax.set_ylabel('Feat 2')
-    ax.set_zlabel('Feat 3')
-    plt.show()
     return SvdResult(u, sigma, v_t)
 
 
-def print_df(df, n=10):
+def print_df(df, n=10, title=None):
     df_to_print = df.iloc[:n, :n]
+    if title:
+        print(tabulate([['', title]], tablefmt='psql'))
     print(tabulate(df_to_print.head(n), headers='keys', tablefmt='psql'))
+    print('\n' * 3)
 
 
 df = pd.read_csv('data/ratings.csv')
 ratings_matrix = df.pivot(index='userId', columns='movieId', values='rating')
-print_df(ratings_matrix)
+print_df(ratings_matrix, title='Ratings Matrix')
 
 
 def compute_predicted_ratings(u, sigma, v_t):
@@ -53,7 +49,7 @@ def compute_predicted_ratings(u, sigma, v_t):
 
 
 ratings_matrix_filled = ratings_matrix.fillna(2.5)
-R = ratings_matrix_filled.values
+R = ratings_matrix_filled.values  # to numpy array
 user_ratings_mean = np.mean(R, axis=1)
 R_demeaned = R - user_ratings_mean.reshape(-1, 1)
 
@@ -61,7 +57,7 @@ R_demeaned = R - user_ratings_mean.reshape(-1, 1)
 # do_svd(R_demeaned, 12)
 svd_result = do_svd(R_demeaned, 7)
 predictions_df = compute_predicted_ratings(svd_result.u, np.diag(svd_result.sigma), svd_result.v_t)
-print_df(predictions_df)
+print_df(predictions_df, title='Predicted Ratings & initial ratings')
 
 
 def remove_original_ratings(preds_df, original_df):
@@ -72,7 +68,7 @@ def remove_original_ratings(preds_df, original_df):
 
 
 preds_only_df_res = remove_original_ratings(predictions_df, ratings_matrix)
-print_df(preds_only_df_res)
+print_df(preds_only_df_res, title='Predicted Ratings only')
 
 
 movies_df = pd.read_csv('data/movies.csv')
